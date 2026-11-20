@@ -20,8 +20,30 @@
     </p>
   </section>
 
-  <section class="empty reveal" style="--i: 3" aria-label="Results">
-    <p class="empty-title">Nothing on the desk yet</p>
-    <p class="empty-hint">Your results will appear here.</p>
+  <section class="results reveal" style="--i: 3" aria-label="Results" aria-live="polite">
+    @if (papers.isLoading()) {
+      <p class="status">Searching CORE…</p>
+    } @else if (papers.error()) {
+      <p class="status status-error">Couldn't reach CORE. Check your API key in .env.local.</p>
+    } @else if (papers.value(); as res) {
+      <p class="status">
+        <span class="num">{{ res.totalHits | number }}</span> papers match
+        <code>{{ query() }}</code> · showing <span class="num">{{ res.results.length }}</span>
+      </p>
+      <ol class="raw-list">
+        @for (paper of res.results; track paper.id) {
+          <li>
+            {{ paper.title ?? 'Untitled' }}
+            <span class="num raw-year">{{ paper.yearPublished }}</span>
+          </li>
+        }
+      </ol>
+      @if (res.results[0]; as first) {
+        <details class="raw">
+          <summary>Raw first result</summary>
+          <pre>{{ first | json }}</pre>
+        </details>
+      }
+    }
   </section>
 </main>

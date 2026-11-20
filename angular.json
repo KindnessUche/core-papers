@@ -62,6 +62,7 @@
               "buildTarget": "core-papers:build:development"
             }
           },
+          "options": {"proxyConfig": "proxy.conf.js"},
           "defaultConfiguration": "development"
         },
         "test": {
