@@ -1,0 +1,97 @@
+/*
+  Design tokens.
+  Concept: paper, ink, and one red pen. Everything else is derived from these.
+  Colours use light-dark() so a single declaration serves both themes.
+*/
+:root {
+  color-scheme: light dark;
+
+  /* Colour */
+  --paper: light-dark(#f6f3ec, #12110e);
+  --surface: light-dark(#fffdf8, #1a1814);
+  --surface-sunk: light-dark(#efebe1, #0d0c0a);
+  --ink: light-dark(#17150f, #f1ede2);
+  --ink-soft: light-dark(#5a564b, #a8a293);
+  --ink-faint: light-dark(#736e5f, #857f70);
+  --rule: light-dark(rgb(23 21 15 / 0.12), rgb(241 237 226 / 0.14));
+  --accent: light-dark(#d93a1e, #ff6a4d);
+  --accent-contrast: light-dark(#ffffff, #12110e);
+  --accent-wash: light-dark(rgb(217 58 30 / 0.1), rgb(255 106 77 / 0.14));
+
+  /* Type: system faces first (they ship optical sizing and cost nothing to load) */
+  --font-ui: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-serif: 'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
+  --font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+
+  /* Tracking is size-specific: tighter as type grows, open as it shrinks */
+  --track-display: -0.03em;
+  --track-title: -0.015em;
+  --track-body: 0;
+  --track-caps: 0.08em;
+
+  --text-display: clamp(2.5rem, 1.4rem + 4.6vw, 4.5rem);
+  --text-title: 1.25rem;
+  --text-body: 1rem;
+  --text-small: 0.875rem;
+  --text-caption: 0.75rem;
+
+  /* Space (4px base) */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+
+  --radius-s: 0.5rem;
+  --radius-m: 0.875rem;
+  --radius-l: 1.25rem;
+  --measure: 72rem;
+  --gutter: clamp(1rem, 4vw, 2rem);
+
+  /* Motion: strong custom curves; the built-in CSS easings are too weak */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+
+  --dur-press: 140ms;
+  --dur-fast: 180ms;
+  --dur-base: 240ms;
+
+  /* Motion that moves things is gated by these, so reduced-motion needs one override */
+  --press-scale: 0.97;
+  --enter-distance: 10px;
+
+  /* Materials */
+  --glass-bg: light-dark(rgb(246 243 236 / 0.72), rgb(18 17 14 / 0.72));
+  --glass-blur: 18px;
+
+  --shadow-s: 0 1px 2px light-dark(rgb(23 21 15 / 0.06), rgb(0 0 0 / 0.4));
+  --shadow-m: 0 8px 24px -8px light-dark(rgb(23 21 15 / 0.16), rgb(0 0 0 / 0.55));
+}
+
+/* Reduced motion means gentler, not nothing: keep fades, drop movement */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --press-scale: 1;
+    --enter-distance: 0px;
+  }
+}
+
+/* Frosted surfaces become solid for people who ask for less transparency */
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    --glass-bg: var(--paper);
+    --glass-blur: 0px;
+  }
+}
+
+@media (prefers-contrast: more) {
+  :root {
+    --rule: light-dark(rgb(23 21 15 / 0.5), rgb(241 237 226 / 0.5));
+    --ink-soft: var(--ink);
+    --ink-faint: var(--ink);
+  }
+}

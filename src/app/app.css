@@ -1,0 +1,120 @@
+:host {
+  display: block;
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  padding-top: env(safe-area-inset-top);
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur)) saturate(160%);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(160%);
+  border-bottom: 1px solid var(--rule);
+}
+
+.topbar-inner,
+.stage {
+  max-width: var(--measure);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+.topbar-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  height: 3.5rem;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-serif);
+  font-size: 1.125rem;
+  font-weight: 600;
+  letter-spacing: var(--track-title);
+  color: var(--ink);
+  text-decoration: none;
+}
+
+/* A red pen mark in the margin */
+.brand-mark {
+  width: 0.5rem;
+  height: 1.25rem;
+  border-radius: 999px;
+  background: var(--accent);
+  transform: rotate(14deg);
+}
+
+.topbar-note {
+  font-size: var(--text-small);
+  color: var(--ink-soft);
+}
+
+.stage {
+  padding-block: clamp(3rem, 10vw, 7rem) var(--space-16);
+  display: grid;
+  gap: var(--space-12);
+}
+
+.hero {
+  display: grid;
+  gap: var(--space-4);
+  max-width: 48rem;
+}
+
+.hero em {
+  font-style: italic;
+  color: var(--accent);
+}
+
+.lede {
+  max-width: 36rem;
+  font-size: 1.125rem;
+  line-height: 1.55;
+  color: var(--ink-soft);
+  text-wrap: pretty;
+}
+
+.empty {
+  display: grid;
+  place-content: center;
+  gap: var(--space-1);
+  min-height: 14rem;
+  text-align: center;
+  border: 1px dashed var(--rule);
+  border-radius: var(--radius-l);
+}
+
+.empty-title {
+  font-family: var(--font-serif);
+  font-size: var(--text-title);
+  letter-spacing: var(--track-title);
+}
+
+.empty-hint {
+  font-size: var(--text-small);
+  color: var(--ink-faint);
+}
+
+/* One entrance per container, short non-uniform delays, never blocks interaction */
+.reveal {
+  animation: reveal 420ms var(--ease-out) backwards;
+  animation-delay: calc(var(--i, 0) * 55ms);
+}
+
+@keyframes reveal {
+  from {
+    opacity: 0;
+    transform: translateY(var(--enter-distance));
+  }
+}
+
+@media (max-width: 30rem) {
+  .topbar-note {
+    display: none;
+  }
+}
