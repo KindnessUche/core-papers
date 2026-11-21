@@ -95,3 +95,70 @@ describe('YearChart', () => {
     expect(label).toContain('The most, 3 papers, were published in 2020');
   });
 });
+
+describe('YearChart zoom', () => {
+  const many: Paper[] = [
+    ...Array.from({ length: 8 }, (_, i) => ({ id: 100 + i, yearPublished: 2000 })),
+    ...Array.from({ length: 2 }, (_, i) => ({ id: 200 + i, yearPublished: 2010 })),
+    { id: 300, yearPublished: 2020 },
+  ];
+  const click = (fixture: { detectChanges(): void }, el: HTMLElement, label: string) => {
+    el.querySelector<HTMLButtonElement>(`button[aria-label="${label}"]`)!.click();
+    fixture.detectChanges();
+  };
+
+  it('starts at the default view with reset disabled', () => {
+    const { el } = render(many);
+    expect(el.querySelector<HTMLButtonElement>('.reset')!.disabled).toBe(true);
+    expect(el.querySelector('.hint')!.textContent).toContain('Drag across the chart');
+  });
+
+  it('zooming in narrows the years, and reset returns to the full range', () => {
+    const { fixture, el } = render(many);
+    const before = el.querySelectorAll('tbody tr').length;
+    click(fixture, el, 'Zoom in on years');
+    expect(el.querySelectorAll('tbody tr').length).toBeLessThan(before);
+    expect(el.querySelector('.hint')!.textContent).toMatch(/Showing\s+\d{4}–\d{4}/);
+
+    el.querySelector<HTMLButtonElement>('.reset')!.click();
+    fixture.detectChanges();
+    expect(el.querySelectorAll('tbody tr').length).toBe(before);
+    expect(el.querySelector<HTMLButtonElement>('.reset')!.disabled).toBe(true);
+  });
+
+  it('never zooms outside the years that have papers', () => {
+    const { fixture, el } = render(many);
+    click(fixture, el, 'Zoom in on years');
+    for (let i = 0; i < 4; i++) click(fixture, el, 'Move to earlier years');
+    const years = Array.from(el.querySelectorAll('tbody th')).map((th) => th.textContent!.trim());
+    expect(Number.parseInt(years[0], 10)).toBeGreaterThanOrEqual(2000);
+    for (let i = 0; i < 8; i++) click(fixture, el, 'Move to later years');
+    const later = Array.from(el.querySelectorAll('tbody th')).map((th) => th.textContent!.trim());
+    expect(Number.parseInt(later.at(-1)!, 10)).toBeLessThanOrEqual(2020);
+  });
+
+  it('taller bars cut the biggest bars off and mark them, keeping the real value in the table', () => {
+    const { fixture, el } = render(many);
+    click(fixture, el, 'Make bars taller');
+    expect(el.querySelectorAll('rect.notch').length).toBeGreaterThan(0);
+    expect(el.querySelector('.hint')!.textContent).toContain('2× taller');
+    const rows = Array.from(el.querySelectorAll('tbody tr')).map((r) => r.textContent!.replace(/\s+/g, '').trim());
+    expect(rows.join('|')).toContain('20008');
+    el.querySelector<HTMLButtonElement>('.reset')!.click();
+    fixture.detectChanges();
+    expect(el.querySelectorAll('rect.notch').length).toBe(0);
+  });
+
+  it('plus, minus and 0 work from the keyboard', () => {
+    const { fixture, el } = render(many);
+    const plot = el.querySelector<HTMLElement>('.plot')!;
+    const press = (key: string) => {
+      plot.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }));
+      fixture.detectChanges();
+    };
+    press('+');
+    expect(el.querySelector('.hint')!.textContent).toContain('Showing');
+    press('0');
+    expect(el.querySelector('.hint')!.textContent).toContain('Drag across');
+  });
+});

@@ -46,7 +46,7 @@ The chart uses CORE's aggregate endpoint (`POST /v3/search/works/aggregate` with
 `aggregations: ["yearPublished"]`), so it counts all matches, not just the papers on screen. It depends on
 the query alone, so paging and changing the page size never refetch it. Matches CORE can't give a year
 for are left out, and the caption says how many. If the aggregate call fails, the papers still show and the
-chart offers a retry. Bins widen automatically (1, 2, 5, 10 years…) so a 1946 outlier doesn't turn the rest
+chart offers a retry. The chart can be zoomed without leaving its box: drag across it (or use Years +/−/←/→, or the `+`/`-` keys) to narrow the years, and Height +/− to stretch the bars so small values can be read. Bars cut off by a taller scale carry a notch and keep their true value in the tooltip and table. It opens at the default view, which fits the biggest bar, and Reset view (or `0`) returns to it. Bins widen automatically (1, 2, 5, 10 years…) so a 1946 outlier doesn't turn the rest
 into slivers.
 
 ## Additions beyond the brief

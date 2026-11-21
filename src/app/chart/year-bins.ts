@@ -28,12 +28,17 @@ export function binYears(years: readonly number[], maxBins: number): YearBin[] {
 }
 
 /** Like binYears, but each year arrives with how many papers it holds. */
-export function binCounts(entries: readonly (readonly [number, number])[], maxBins: number): YearBin[] {
+export function binCounts(
+  entries: readonly (readonly [number, number])[],
+  maxBins: number,
+  /** Years to cover even where there are no papers, so a zoomed view keeps its edges. */
+  window?: { from: number; to: number },
+): YearBin[] {
   const years = entries.filter(([, count]) => count > 0).map(([year]) => year);
   if (years.length === 0) return [];
 
-  const min = Math.min(...years);
-  const max = Math.max(...years);
+  const min = window ? Math.min(window.from, ...years) : Math.min(...years);
+  const max = window ? Math.max(window.to, ...years) : Math.max(...years);
   const span = max - min + 1;
   const width = WIDTHS.find((w) => Math.ceil(span / w) <= maxBins) ?? WIDTHS[WIDTHS.length - 1];
   // Align wide bins to round numbers: 1990–1999, not 1987–1996

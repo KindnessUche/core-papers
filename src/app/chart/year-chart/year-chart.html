@@ -14,6 +14,29 @@
   @if (bins().length === 0) {
     <p class="none">None of the matching papers have a publication year, so there is nothing to chart.</p>
   } @else {
+    <div class="tools" role="toolbar" aria-label="Chart zoom">
+      <div class="tool-group" role="group" aria-label="Years">
+        <span class="tool-name">Years</span>
+        <button type="button" class="tool" aria-label="Zoom in on years" [disabled]="!canZoomInX()" (click)="zoomX(1)">+</button>
+        <button type="button" class="tool" aria-label="Zoom out on years" [disabled]="!canZoomOutX()" (click)="zoomX(-1)">−</button>
+        <button type="button" class="tool" aria-label="Move to earlier years" [disabled]="!canPan()" (click)="pan(-1)">←</button>
+        <button type="button" class="tool" aria-label="Move to later years" [disabled]="!canPan()" (click)="pan(1)">→</button>
+      </div>
+      <div class="tool-group" role="group" aria-label="Bar height">
+        <span class="tool-name">Height</span>
+        <button type="button" class="tool" aria-label="Make bars taller" [disabled]="!canZoomInY()" (click)="zoomY(1)">+</button>
+        <button type="button" class="tool" aria-label="Make bars shorter" [disabled]="yZoom() === 1" (click)="zoomY(-1)">−</button>
+      </div>
+      <button type="button" class="tool reset" [disabled]="!zoomed()" (click)="reset()">Reset view</button>
+      <p class="hint" aria-live="polite">
+        @if (zoomed()) {
+          Showing <span class="num">{{ viewLabel() }}</span>@if (yZoom() > 1) {, bars {{ yZoom() }}× taller}.
+        } @else {
+          Drag across the chart to zoom in.
+        }
+      </p>
+    </div>
+
     <div
       #frame
       class="plot"
@@ -23,6 +46,10 @@
       (keydown)="onKey($event)"
       (blur)="active.set(null)"
       (pointerleave)="active.set(null)"
+      (pointerdown)="dragStart($event)"
+      (pointermove)="dragMove($event)"
+      (pointerup)="dragEnd()"
+      (pointercancel)="selection.set(null)"
     >
       <svg class="svg" [attr.width]="width()" [attr.height]="height" aria-hidden="true">
         @for (tick of ticks(); track tick.value) {
@@ -48,6 +75,10 @@
               [style.--i]="i"
               [style.transform-origin]="'0 ' + baseline + 'px'"
             />
+            @if (bar.clipped) {
+              <!-- A cut through the top says this bar is taller than the axis; the tooltip has the real value -->
+              <rect class="notch" [attr.x]="bar.notchX" [attr.y]="bar.y + 5" [attr.width]="bar.notchW" height="2" />
+            }
           }
         }
 
@@ -57,6 +88,10 @@
               {{ top.bin.count }}
             </text>
           }
+        }
+
+        @if (selectionRect(); as sel) {
+          <rect class="selection" [attr.x]="sel.x" [attr.y]="margin.top" [attr.width]="sel.width" [attr.height]="innerH" />
         }
 
         @for (label of labels(); track label.i) {

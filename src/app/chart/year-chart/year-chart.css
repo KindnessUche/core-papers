@@ -33,8 +33,89 @@
   text-wrap: pretty;
 }
 
+.tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+  margin-bottom: var(--space-3);
+}
+
+.tool-group {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.tool-name {
+  margin-right: var(--space-1);
+  font-size: var(--text-small);
+  color: var(--ink-soft);
+}
+
+.tool {
+  min-width: 2.25rem;
+  min-height: 2.25rem;
+  padding-inline: var(--space-2);
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--text-small);
+  cursor: pointer;
+  transition: transform 120ms var(--ease-out), background-color 120ms var(--ease-out);
+}
+
+.tool:active:not(:disabled) {
+  transform: scale(var(--press-scale, 0.97));
+}
+
+.tool:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.tool:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.reset {
+  padding-inline: var(--space-3);
+}
+
+.hint {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: var(--text-small);
+  color: var(--ink-soft);
+}
+
+@media (min-width: 40rem) {
+  .hint {
+    flex-basis: auto;
+    margin-left: auto;
+  }
+}
+
+.notch {
+  fill: var(--surface);
+  pointer-events: none;
+}
+
+.selection {
+  fill: var(--chart-peak);
+  fill-opacity: 0.12;
+  stroke: var(--chart-peak);
+  stroke-opacity: 0.5;
+  pointer-events: none;
+}
+
 .plot {
   position: relative;
+  user-select: none;
+  -webkit-user-select: none;
   border-radius: var(--radius-s);
 }
 
@@ -81,7 +162,7 @@
 
 .hit {
   fill: transparent;
-  cursor: default;
+  cursor: crosshair;
 }
 
 @keyframes grow {
