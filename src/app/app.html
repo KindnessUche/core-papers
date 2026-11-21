@@ -20,30 +20,64 @@
     </p>
   </section>
 
+  <section class="search reveal" style="--i: 3" aria-label="Search">
+    <app-search-bar [query]="query()" [busy]="papers.isLoading()" (search)="search($event)">
+      <app-limit-control settings [(value)]="limit" />
+    </app-search-bar>
+  </section>
+
   <section class="results" aria-labelledby="results-title">
     <h2 id="results-title" class="sr-only">Results</h2>
 
-    <div class="toolbar">
-      <p class="status" [class.status-error]="papers.error()" role="status">
-        @if (papers.error()) {
-          Couldn't reach CORE. Check your API key in .env.local.
-        } @else if (shown(); as res) {
-          <span class="num">{{ res.totalHits | number }}</span>
-          {{ res.totalHits | i18nPlural: matchLabel }} <code>{{ query() }}</code> · showing
-          <span class="num">{{ res.results.length }}</span>
-        } @else {
-          Searching CORE…
+    @if (!query()) {
+      <div class="empty">
+        <p class="empty-title">Nothing on the desk yet</p>
+        <p class="empty-hint">Search above, or start with one of these:</p>
+        <ul class="examples">
+          @for (example of examples; track example) {
+            <li>
+              <button type="button" class="example" (click)="search(example)">{{ example }}</button>
+            </li>
+          }
+        </ul>
+      </div>
+    } @else if (papers.error()) {
+      <div class="empty" role="alert">
+        <p class="empty-title">That didn't work</p>
+        <p class="empty-hint">{{ errorMessage() }}</p>
+        <button type="button" class="retry" (click)="papers.reload()">Try again</button>
+      </div>
+    } @else if (shown(); as found) {
+      <p class="status" role="status">
+        <span class="num">{{ found.response.totalHits | number }}</span>
+        {{ found.response.totalHits | i18nPlural: matchLabel }} <code>{{ found.query }}</code>
+        @if (found.response.results.length) {
+          · showing <span class="num">{{ found.response.results.length }}</span>
         }
       </p>
-      <app-limit-control [(value)]="limit" />
-    </div>
 
-    @if (shown(); as res) {
-      <ul class="grid" [class.stale]="papers.isLoading()" [attr.aria-busy]="papers.isLoading()">
-        @for (paper of res.results; track paper.id; let i = $index) {
-          <li [style.--i]="i">
-            <app-paper-card [paper]="paper" />
-          </li>
+      @if (found.response.results.length) {
+        <ul class="grid" [class.stale]="papers.isLoading()" [attr.aria-busy]="papers.isLoading()">
+          @for (paper of found.response.results; track paper.id; let i = $index) {
+            <li [style.--i]="i">
+              <app-paper-card [paper]="paper" />
+            </li>
+          }
+        </ul>
+      } @else {
+        <div class="empty">
+          <p class="empty-title">No papers match that</p>
+          <p class="empty-hint">
+            Try fewer words, check the spelling, or swap an <code>AND</code> for an
+            <code>OR</code>.
+          </p>
+        </div>
+      }
+    } @else {
+      <p class="status" role="status">Searching CORE…</p>
+      <ul class="grid" aria-busy="true">
+        @for (n of skeletons; track n) {
+          <li><app-paper-card-skeleton /></li>
         }
       </ul>
     }

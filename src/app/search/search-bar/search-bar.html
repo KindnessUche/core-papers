@@ -1,0 +1,50 @@
+<form class="bar" role="search" novalidate (submit)="submit($event)">
+  <div class="field" [class.invalid]="showError()">
+    <svg class="icon" viewBox="0 0 20 20" width="20" height="20" aria-hidden="true">
+      <circle cx="8.5" cy="8.5" r="5.75" fill="none" stroke="currentColor" stroke-width="1.75" />
+      <path d="m13 13 4.25 4.25" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" />
+    </svg>
+
+    <input
+      #box
+      class="input"
+      type="text"
+      name="q"
+      aria-label="Search research papers"
+      placeholder="drone AND (package OR delivery)"
+      autocomplete="off"
+      autocapitalize="off"
+      spellcheck="false"
+      enterkeyhint="search"
+      [value]="draft()"
+      [attr.aria-invalid]="showError()"
+      [attr.aria-describedby]="noteId"
+      (input)="onInput($event)"
+      (blur)="onBlur()"
+    />
+
+    @if (draft()) {
+      <button type="button" class="clear" aria-label="Clear search" (click)="clear()">
+        <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true">
+          <path d="m5 5 10 10M15 5 5 15" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" />
+        </svg>
+      </button>
+    }
+
+    <button type="submit" class="go">{{ busy() ? 'Searching…' : 'Search' }}</button>
+  </div>
+
+  <div class="meta">
+    <p class="note" [id]="noteId" [class.error]="showError()" aria-live="polite">
+      @if (showError()) {
+        {{ check().error }}
+      } @else if (check().hint) {
+        {{ check().hint }}
+      } @else {
+        Boolean search: <code>AND</code> <code>OR</code> <code>NOT</code>
+        <code>"exact phrase"</code> <code>( )</code>
+      }
+    </p>
+    <ng-content select="[settings]" />
+  </div>
+</form>
