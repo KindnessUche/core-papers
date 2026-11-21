@@ -57,6 +57,10 @@
       </p>
 
       @if (found.response.results.length) {
+        <div class="chart-slot" [class.stale]="papers.isLoading()">
+          <app-year-chart [papers]="found.response.results" [total]="found.response.totalHits" />
+        </div>
+
         <ul class="grid" [class.stale]="papers.isLoading()" [attr.aria-busy]="papers.isLoading()">
           @for (paper of found.response.results; track paper.id; let i = $index) {
             <li [style.--i]="i">

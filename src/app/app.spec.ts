@@ -70,6 +70,29 @@ describe('App', () => {
     expect(text()).toContain('1,234 papers match drone');
   });
 
+  it('charts the papers by year, and says how many of the matches it covers', async () => {
+    submitQuery('drone');
+    request('drone').flush(
+      page(
+        [
+          { id: 1, title: 'A', yearPublished: 2020 },
+          { id: 2, title: 'B', yearPublished: 2020 },
+          { id: 3, title: 'C', yearPublished: 2021 },
+        ],
+        900,
+      ),
+    );
+    await flushed();
+
+    expect(el.querySelectorAll('path.bar').length).toBe(2);
+    expect(text()).toContain('Papers by year');
+    expect(text()).toContain('Based on the 3 papers shown, out of 900 matches.');
+  });
+
+  it('shows no chart before a search', () => {
+    expect(el.querySelector('app-year-chart')).toBeNull();
+  });
+
   it('fetches again with the new limit, keeping old results on screen meanwhile', async () => {
     submitQuery('drone');
     request('drone').flush(page([{ id: 1, title: 'First batch' }]));

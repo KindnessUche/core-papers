@@ -1,0 +1,174 @@
+:host {
+  display: block;
+}
+
+.chart {
+  margin: 0;
+  padding: var(--space-6);
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-l);
+  box-shadow: var(--shadow-s);
+}
+
+.head {
+  display: grid;
+  gap: var(--space-1);
+  margin-bottom: var(--space-4);
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: var(--text-title);
+  font-weight: 600;
+  letter-spacing: var(--track-title);
+}
+
+.sub,
+.none {
+  margin: 0;
+  font-size: var(--text-small);
+  color: var(--ink-soft);
+  text-wrap: pretty;
+}
+
+.plot {
+  position: relative;
+  border-radius: var(--radius-s);
+}
+
+.svg {
+  display: block;
+  max-width: 100%;
+  overflow: visible;
+  touch-action: pan-y;
+}
+
+/* Recessive hairlines and muted text: the data is the only loud thing */
+.grid {
+  stroke: var(--chart-grid);
+  stroke-width: 1;
+}
+
+.tick {
+  fill: var(--ink-faint);
+  font-size: 11px;
+}
+
+.bar {
+  fill: var(--chart-bar);
+  /* Origin is set per bar (the baseline), so scaling grows the bar up from the axis */
+  transform-box: view-box;
+  transition: opacity var(--dur-fast) var(--ease-out);
+  animation: grow 420ms var(--ease-out) backwards;
+  animation-delay: calc(min(var(--i, 0), 14) * 16ms);
+}
+
+.bar.peak {
+  fill: var(--chart-peak);
+}
+
+.bar.dim {
+  opacity: 0.5;
+}
+
+.peak-label {
+  fill: var(--ink);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.hit {
+  fill: transparent;
+  cursor: default;
+}
+
+@keyframes grow {
+  from {
+    transform: scaleY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bar {
+    animation-name: fade;
+  }
+  @keyframes fade {
+    from {
+      opacity: 0;
+    }
+  }
+}
+
+.tip {
+  position: absolute;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: auto auto;
+  align-items: baseline;
+  gap: 0 var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  transform: translate(-50%, -100%);
+  background: var(--ink);
+  color: var(--paper);
+  border-radius: var(--radius-s);
+  box-shadow: var(--shadow-m);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.tip-value {
+  font-size: 1.125rem;
+  line-height: 1.2;
+}
+
+.tip-name {
+  font-size: var(--text-small);
+}
+
+.tip-range {
+  grid-column: 1 / -1;
+  font-size: var(--text-caption);
+  opacity: 0.7;
+}
+
+.table-view {
+  margin-top: var(--space-4);
+  font-size: var(--text-small);
+}
+
+.table-view summary {
+  display: inline-block;
+  padding: var(--space-1) 0;
+  color: var(--ink-soft);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.table-view table {
+  width: 100%;
+  max-width: 24rem;
+  margin-top: var(--space-2);
+  border-collapse: collapse;
+}
+
+.table-view th,
+.table-view td {
+  padding: var(--space-1) var(--space-2);
+  border-bottom: 1px solid var(--rule);
+  text-align: left;
+  font-weight: 400;
+}
+
+.table-view thead th {
+  color: var(--ink-faint);
+  font-size: var(--text-caption);
+  font-weight: 600;
+  letter-spacing: var(--track-caps);
+  text-transform: uppercase;
+}
+
+.table-view .right {
+  text-align: right;
+}

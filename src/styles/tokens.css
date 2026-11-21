@@ -95,3 +95,14 @@
     --ink-faint: var(--ink);
   }
 }
+
+/*
+  Chart colours. One series, so the form is emphasis: everything in a muted grey, the one
+  bar that matters in the accent. Checked with the dataviz validator: marks keep 3:1 against
+  the surface, and the peak stays distinct from the grey under red-green colour blindness.
+*/
+:root {
+  --chart-bar: light-dark(#8c8778, #6f6a5e);
+  --chart-peak: var(--accent);
+  --chart-grid: var(--rule);
+}

@@ -5,6 +5,7 @@ import { map } from 'rxjs';
 import { CoreApiService } from './data/core-api.service';
 import { describeError } from './data/describe-error';
 import { SearchResponse } from './data/paper.model';
+import { YearChart } from './chart/year-chart/year-chart';
 import { LimitControl } from './papers/limit-control/limit-control';
 import { PaperCardSkeleton } from './papers/paper-card/paper-card-skeleton';
 import { PaperCard } from './papers/paper-card/paper-card';
@@ -18,7 +19,15 @@ interface Found {
 
 @Component({
   selector: 'app-root',
-  imports: [DecimalPipe, I18nPluralPipe, PaperCard, PaperCardSkeleton, LimitControl, SearchBar],
+  imports: [
+    DecimalPipe,
+    I18nPluralPipe,
+    PaperCard,
+    PaperCardSkeleton,
+    LimitControl,
+    SearchBar,
+    YearChart,
+  ],
   styleUrl: './app.css',
   templateUrl: './app.html',
 })

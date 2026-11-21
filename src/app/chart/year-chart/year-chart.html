@@ -1,0 +1,115 @@
+<figure class="chart">
+  <figcaption class="head">
+    <h3 class="title">Papers by year</h3>
+    <p class="sub">
+      @if (coversAll()) {
+        Based on all <span class="num">{{ shownCount() | number }}</span>
+        {{ shownCount() === 1 ? 'paper' : 'papers' }} that match.
+      } @else {
+        Based on the <span class="num">{{ shownCount() | number }}</span>
+        {{ shownCount() === 1 ? 'paper' : 'papers' }} shown, out of
+        <span class="num">{{ total() | number }}</span> matches.
+      }
+      @if (skipped()) {
+        <span class="num">{{ skipped() }}</span> without a usable year
+        {{ skipped() === 1 ? 'is' : 'are' }} left out.
+      }
+    </p>
+  </figcaption>
+
+  @if (bins().length === 0) {
+    <p class="none">None of these papers have a publication year, so there is nothing to chart.</p>
+  } @else {
+    <div
+      #frame
+      class="plot"
+      role="group"
+      tabindex="0"
+      [attr.aria-label]="summary()"
+      (keydown)="onKey($event)"
+      (blur)="active.set(null)"
+      (pointerleave)="active.set(null)"
+    >
+      <svg class="svg" [attr.width]="width()" [attr.height]="height" aria-hidden="true">
+        @for (tick of ticks(); track tick.value) {
+          <line
+            class="grid"
+            [attr.x1]="margin.left"
+            [attr.x2]="width() - margin.right"
+            [attr.y1]="tick.y"
+            [attr.y2]="tick.y"
+          />
+          <text class="tick num" [attr.x]="margin.left - 8" [attr.y]="tick.y + 4" text-anchor="end">
+            {{ tick.value }}
+          </text>
+        }
+
+        @for (bar of bars(); track bar.bin.start; let i = $index) {
+          @if (bar.bin.count > 0) {
+            <path
+              class="bar"
+              [class.peak]="i === peak()"
+              [class.dim]="active() !== null && active() !== i"
+              [attr.d]="bar.path"
+              [style.--i]="i"
+              [style.transform-origin]="'0 ' + baseline + 'px'"
+            />
+          }
+        }
+
+        @if (bars()[peak()]; as top) {
+          @if (active() === null) {
+            <text class="peak-label num" [attr.x]="top.bandX + band() / 2" [attr.y]="top.y - 7" text-anchor="middle">
+              {{ top.bin.count }}
+            </text>
+          }
+        }
+
+        @for (label of labels(); track label.i) {
+          <text class="tick" [attr.x]="label.x" [attr.y]="height - 8" text-anchor="middle">{{ label.text }}</text>
+        }
+
+        <!-- Hit areas span the whole slot and height, far bigger than the bars themselves -->
+        @for (bar of bars(); track bar.bin.start; let i = $index) {
+          <rect
+            class="hit"
+            [attr.x]="bar.bandX"
+            [attr.y]="margin.top"
+            [attr.width]="band()"
+            [attr.height]="innerH"
+            (pointermove)="active.set(i)"
+            (pointerdown)="active.set(i)"
+          />
+        }
+      </svg>
+
+      @if (tooltip(); as tip) {
+        <div class="tip" role="status" [style.left.px]="tip.left" [style.top.px]="tip.top">
+          <strong class="tip-value num">{{ tip.bin.count }}</strong>
+          <span class="tip-name">{{ tip.bin.count === 1 ? 'paper' : 'papers' }}</span>
+          <span class="tip-range num">{{ tip.bin.range }}</span>
+        </div>
+      }
+    </div>
+
+    <details class="table-view">
+      <summary>View as table</summary>
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Years</th>
+            <th scope="col" class="right">Papers</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (bin of bins(); track bin.start) {
+            <tr>
+              <th scope="row" class="num">{{ bin.range }}</th>
+              <td class="num right">{{ bin.count }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </details>
+  }
+</figure>
