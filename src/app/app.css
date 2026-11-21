@@ -124,7 +124,8 @@
 }
 
 .example,
-.retry {
+.retry,
+.export {
   min-height: 2.25rem;
   padding: 0 var(--space-4);
   border: 1px solid var(--rule);
@@ -139,29 +140,44 @@
     border-color var(--dur-fast) var(--ease-out);
 }
 
+.status-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-4);
+}
+
+.export,
 .retry {
-  justify-self: center;
-  margin-top: var(--space-3);
   font-family: var(--font-ui);
   font-size: var(--text-small);
   font-weight: 600;
 }
 
+.retry {
+  justify-self: center;
+  margin-top: var(--space-3);
+}
+
 .example:active,
-.retry:active {
+.retry:active,
+.export:active {
   transform: scale(var(--press-scale));
 }
 
 @media (hover: hover) and (pointer: fine) {
   .example:hover,
-  .retry:hover {
+  .retry:hover,
+  .export:hover {
     border-color: var(--accent);
   }
 }
 
 @media (pointer: coarse) {
   .example,
-  .retry {
+  .retry,
+  .export {
     min-height: 2.75rem;
   }
 }

@@ -6,6 +6,7 @@ import { map } from 'rxjs';
 import { CoreApiService } from './data/core-api.service';
 import { describeError } from './data/describe-error';
 import { SearchResponse } from './data/paper.model';
+import { csvFilename, downloadText, papersToCsv } from './export/papers-csv';
 import { YearChart } from './chart/year-chart/year-chart';
 import { LimitControl } from './papers/limit-control/limit-control';
 import { PaperCardSkeleton } from './papers/paper-card/paper-card-skeleton';
@@ -113,6 +114,10 @@ export class App {
 
   protected readonly errorMessage = () =>
     this.papers.error() ? describeError(this.papers.error()) : '';
+
+  protected exportCsv(found: Found): void {
+    downloadText(csvFilename(found.query), papersToCsv(found.response.results));
+  }
 
   protected search(query: string): void {
     // Searching the same thing again is a request to refresh it

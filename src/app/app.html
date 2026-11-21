@@ -48,13 +48,18 @@
         <button type="button" class="retry" (click)="papers.reload()">Try again</button>
       </div>
     } @else if (shown(); as found) {
-      <p class="status" role="status">
-        <span class="num">{{ found.response.totalHits | number }}</span>
-        {{ found.response.totalHits | i18nPlural: matchLabel }} <code>{{ found.query }}</code>
+      <div class="status-row">
+        <p class="status" role="status">
+          <span class="num">{{ found.response.totalHits | number }}</span>
+          {{ found.response.totalHits | i18nPlural: matchLabel }} <code>{{ found.query }}</code>
+          @if (found.response.results.length) {
+            · showing <span class="num">{{ found.response.results.length }}</span>
+          }
+        </p>
         @if (found.response.results.length) {
-          · showing <span class="num">{{ found.response.results.length }}</span>
+          <button type="button" class="export" (click)="exportCsv(found)">Export CSV</button>
         }
-      </p>
+      </div>
 
       @if (found.response.results.length) {
         <div class="chart-slot" [class.stale]="papers.isLoading()">

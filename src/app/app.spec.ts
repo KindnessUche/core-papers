@@ -167,6 +167,48 @@ describe('App', () => {
     expect(text()).not.toContain('A paper');
   });
 
+  describe('export', () => {
+    it('downloads the papers on screen as a CSV named after the search', async () => {
+      start();
+      submitQuery('drone AND package');
+      request('drone AND package').flush(
+        page([{ id: 1, title: 'Delivery drones', yearPublished: 2021 }]),
+      );
+      await flushed();
+
+      const created: Blob[] = [];
+      const names: string[] = [];
+      URL.createObjectURL = (blob: Blob | MediaSource) => {
+        created.push(blob as Blob);
+        return 'blob:test';
+      };
+      URL.revokeObjectURL = () => undefined;
+      const click = HTMLAnchorElement.prototype.click;
+      HTMLAnchorElement.prototype.click = function (this: HTMLAnchorElement) {
+        names.push(this.download);
+      };
+      try {
+        el.querySelector<HTMLButtonElement>('.export')!.click();
+      } finally {
+        HTMLAnchorElement.prototype.click = click;
+      }
+
+      expect(names).toHaveLength(1);
+      expect(names[0]).toMatch(/^marginalia-drone-and-package-\d{4}-\d{2}-\d{2}\.csv$/);
+      const csv = await created[0].text();
+      expect(csv).toContain('id,title,authors');
+      expect(csv).toContain('Delivery drones');
+    });
+
+    it('offers no export when there is nothing to export', async () => {
+      start();
+      submitQuery('zzzz');
+      request('zzzz').flush(page([], 0));
+      await flushed();
+      expect(el.querySelector('.export')).toBeNull();
+    });
+  });
+
   describe('address bar', () => {
     it('starts the search a link describes, including its result count', () => {
       start('/?q=drone&n=25');
