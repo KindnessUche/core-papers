@@ -1,13 +1,4 @@
-/**
- * Dev proxy for the CORE API.
- *
- * The browser calls /core-api/*, this proxy forwards it to https://api.core.ac.uk/v3/*
- * and attaches the API key server-side. That gives us two things for free:
- *   1. the key never ships in the browser bundle, and
- *   2. no CORS surprises, because the browser only ever talks to localhost.
- *
- * The key is read from the CORE_API_KEY environment variable or from .env.local.
- */
+
 const fs = require('node:fs');
 const path = require('node:path');
 
@@ -36,7 +27,7 @@ if (!key) {
 
 module.exports = {
   '/core-api': {
-    // CORE_API_ORIGIN lets tests point the proxy at a local stub
+
     target: env.CORE_API_ORIGIN || 'https://api.core.ac.uk',
     changeOrigin: true,
     secure: true,

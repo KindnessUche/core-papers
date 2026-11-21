@@ -102,6 +102,15 @@ export class App {
       ),
   });
 
+  /**
+   * Papers per year across every match, counted by CORE. It depends on the query alone, so
+   * paging and changing the page size never refetch it.
+   */
+  protected readonly years = rxResource({
+    params: () => (this.query() ? { q: this.query() } : undefined),
+    stream: ({ params }) => this.api.yearCounts(params.q),
+  });
+
   /** Keeps the previous results on screen while the next ones load, so the page never jumps. */
   protected readonly shown = linkedSignal<Found | undefined, Found | undefined>({
     source: () => (this.papers.hasValue() ? this.papers.value() : undefined),
@@ -164,6 +173,7 @@ export class App {
     // Searching the same thing again is a request to refresh it
     if (query && query === this.query()) {
       this.papers.reload();
+      this.years.reload();
     } else {
       this.page.set(1);
       this.query.set(query);

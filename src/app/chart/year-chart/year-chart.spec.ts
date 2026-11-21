@@ -2,9 +2,17 @@ import { TestBed } from '@angular/core/testing';
 import { Paper } from '../../data/paper.model';
 import { YearChart } from './year-chart';
 
+function countByYear(papers: Paper[]): Record<string, number> {
+  const counts: Record<string, number> = {};
+  for (const p of papers) {
+    if (p.yearPublished != null) counts[p.yearPublished] = (counts[p.yearPublished] ?? 0) + 1;
+  }
+  return counts;
+}
+
 function render(papers: Paper[], total = papers.length) {
   const fixture = TestBed.createComponent(YearChart);
-  fixture.componentRef.setInput('papers', papers);
+  fixture.componentRef.setInput('counts', countByYear(papers));
   fixture.componentRef.setInput('total', total);
   fixture.detectChanges();
   const el = fixture.nativeElement as HTMLElement;
@@ -42,15 +50,17 @@ describe('YearChart', () => {
     expect(rows).toEqual(['2018 1', '2019 0', '2020 3', '2021 0', '2022 1']);
   });
 
-  it('is honest about being a sample, and about what it left out', () => {
+  it('says it counted every match, and how many have no usable year', () => {
     const { text } = render(papers, 71213);
-    expect(text()).toContain('Based on the 7 papers shown, out of 71,213 matches.');
-    expect(text()).toContain('2 without a usable year are left out.');
+    expect(text()).toContain('Counted across all 71,213 papers that match.');
+    // Only 5 of the 71,213 have a year CORE could count
+    expect(text()).toContain('71,208 without a usable year are left out.');
   });
 
-  it('says so when it covers every match', () => {
+  it('leaves nothing out when every match has a year', () => {
     const { text } = render([{ id: 1, yearPublished: 2020 }]);
-    expect(text()).toContain('Based on all 1 paper that match.');
+    expect(text()).toContain('Counted across all 1 paper that match.');
+    expect(text()).not.toContain('left out');
   });
 
   it('explains itself when no paper has a year', () => {

@@ -41,7 +41,7 @@ describe('papersToCsv', () => {
   it('starts with a byte-order mark and a header, and ends each row with CRLF', () => {
     const csv = papersToCsv([paper]);
     expect(csv.startsWith('﻿id,title,authors,year,')).toBe(true);
-    expect(csv.split('\r\n')).toHaveLength(3); // header, one row, trailing newline
+    expect(csv.split('\r\n')).toHaveLength(3);
   });
 
   it('writes one row per paper using the same cleaned values as the cards', () => {

@@ -2,23 +2,17 @@
   <figcaption class="head">
     <h3 class="title">Papers by year</h3>
     <p class="sub">
-      @if (coversAll()) {
-        Based on all <span class="num">{{ shownCount() | number }}</span>
-        {{ shownCount() === 1 ? 'paper' : 'papers' }} that match.
-      } @else {
-        Based on the <span class="num">{{ shownCount() | number }}</span>
-        {{ shownCount() === 1 ? 'paper' : 'papers' }} shown, out of
-        <span class="num">{{ total() | number }}</span> matches.
-      }
+      Counted across all <span class="num">{{ total() | number }}</span>
+      {{ total() === 1 ? 'paper' : 'papers' }} that match.
       @if (skipped()) {
-        <span class="num">{{ skipped() }}</span> without a usable year
+        <span class="num">{{ skipped() | number }}</span> without a usable year
         {{ skipped() === 1 ? 'is' : 'are' }} left out.
       }
     </p>
   </figcaption>
 
   @if (bins().length === 0) {
-    <p class="none">None of these papers have a publication year, so there is nothing to chart.</p>
+    <p class="none">None of the matching papers have a publication year, so there is nothing to chart.</p>
   } @else {
     <div
       #frame

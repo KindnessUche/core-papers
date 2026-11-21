@@ -21,6 +21,15 @@ export function isPlausibleYear(year: unknown, now = new Date().getFullYear()): 
  * the number of bins at or under `maxBins`.
  */
 export function binYears(years: readonly number[], maxBins: number): YearBin[] {
+  return binCounts(
+    years.map((year) => [year, 1] as const),
+    maxBins,
+  );
+}
+
+/** Like binYears, but each year arrives with how many papers it holds. */
+export function binCounts(entries: readonly (readonly [number, number])[], maxBins: number): YearBin[] {
+  const years = entries.filter(([, count]) => count > 0).map(([year]) => year);
   if (years.length === 0) return [];
 
   const min = Math.min(...years);
@@ -41,8 +50,8 @@ export function binYears(years: readonly number[], maxBins: number): YearBin[] {
       count: 0,
     });
   }
-  for (const year of years) {
-    bins[Math.floor((year - first) / width)].count++;
+  for (const [year, count] of entries) {
+    if (count > 0) bins[Math.floor((year - first) / width)].count += count;
   }
   return bins;
 }

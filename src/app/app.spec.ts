@@ -16,7 +16,15 @@ describe('App', () => {
   let el: HTMLElement;
 
   const text = () => el.textContent!.replace(/\s+/g, ' ');
+  /** What CORE's year aggregate answers with. Every search also asks for it. */
+  let yearCounts: Record<string, number> = {};
+  const answerYears = () =>
+    http
+      .match((r) => r.url === '/core-api/search/works/aggregate')
+      .filter((r) => !r.cancelled)
+      .forEach((r) => r.flush({ aggregations: { yearPublished: yearCounts } }));
   const flushed = async () => {
+    answerYears();
     fixture.detectChanges();
     await fixture.whenStable();
     fixture.detectChanges();
@@ -42,6 +50,7 @@ describe('App', () => {
   };
 
   beforeEach(async () => {
+    yearCounts = {};
     await TestBed.configureTestingModule({
       imports: [App],
       providers: [provideHttpClient(), provideHttpClientTesting()],
@@ -50,6 +59,7 @@ describe('App', () => {
   });
 
   afterEach(() => {
+    answerYears();
     http.verify();
     fixture?.destroy();
     history.replaceState(null, '', '/');
@@ -84,24 +94,67 @@ describe('App', () => {
     expect(text()).toContain('1,234 papers match drone');
   });
 
-  it('charts the papers by year, and says how many of the matches it covers', async () => {
+  it('charts every match by year, not just the papers on the page', async () => {
+    yearCounts = { '2019': 300, '2020': 450, '2021': 150 };
     start();
     submitQuery('drone');
-    request('drone').flush(
-      page(
-        [
-          { id: 1, title: 'A', yearPublished: 2020 },
-          { id: 2, title: 'B', yearPublished: 2020 },
-          { id: 3, title: 'C', yearPublished: 2021 },
-        ],
-        900,
-      ),
-    );
+    // The page itself holds a single paper
+    request('drone').flush(page([{ id: 1, title: 'A', yearPublished: 2020 }], 900));
     await flushed();
 
-    expect(el.querySelectorAll('path.bar').length).toBe(2);
-    expect(text()).toContain('Papers by year');
-    expect(text()).toContain('Based on the 3 papers shown, out of 900 matches.');
+    expect(el.querySelectorAll('path.bar').length).toBe(3);
+    expect(el.querySelector('.peak-label')?.textContent?.trim()).toBe('450');
+    expect(text()).toContain('Counted across all 900 papers that match.');
+  });
+
+  it('asks CORE to aggregate the query by year', async () => {
+    start();
+    submitQuery('drone AND (package OR delivery)');
+    request('drone AND (package OR delivery)').flush(page([{ id: 1 }], 5));
+    const agg = http.expectOne((r) => r.url === '/core-api/search/works/aggregate');
+    expect(agg.request.method).toBe('POST');
+    expect(agg.request.body).toEqual({
+      q: 'drone AND (package OR delivery)',
+      aggregations: ['yearPublished'],
+    });
+    agg.flush({ aggregations: { yearPublished: { '2020': 5 } } });
+    await flushed();
+  });
+
+  it('does not recount the years when the page or page size changes', async () => {
+    yearCounts = { '2020': 100 };
+    start();
+    submitQuery('drone');
+    request('drone').flush(page([{ id: 1 }], 100));
+    await flushed();
+
+    Array.from(el.querySelectorAll<HTMLButtonElement>('.pager button'))
+      .find((b) => b.textContent!.trim() === 'Next')!
+      .click();
+    fixture.detectChanges();
+    TestBed.tick();
+    http.expectOne((r) => r.params.get('offset') === '10').flush(page([{ id: 11 }], 100));
+    await flushed();
+    http.expectNone((r) => r.url === '/core-api/search/works/aggregate');
+  });
+
+  it('says so, and offers a retry, when the year counts fail', async () => {
+    start();
+    submitQuery('drone');
+    request('drone').flush(page([{ id: 1, title: 'A' }], 5));
+    http
+      .expectOne((r) => r.url === '/core-api/search/works/aggregate')
+      .flush('nope', { status: 500, statusText: 'Server Error' });
+    await flushed();
+
+    expect(text()).toContain('A'); // the papers still show
+    expect(text()).toContain("Couldn't load the chart");
+    yearCounts = { '2020': 5 };
+    el.querySelector<HTMLButtonElement>('.chart-note .retry')!.click();
+    fixture.detectChanges();
+    TestBed.tick();
+    await flushed();
+    expect(el.querySelectorAll('path.bar').length).toBe(1);
   });
 
   it('shows no chart before a search', () => {

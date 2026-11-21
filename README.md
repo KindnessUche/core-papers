@@ -38,15 +38,16 @@ that does the same rewrite and adds the key.
 4. **Result count**: a segmented control for 10, 25, 50 or 100 papers per page, with a pager (Previous/Next and numbered pages; "Page X of Y" on phones) to move through the rest. The page is in the URL (`p`), so Back and shared links work. Changing the page size keeps you near the paper you were reading.
 5. **Boolean search**: `drone AND (package OR delivery)`, `"exact phrase"`, `NOT`. Searches run on
    Enter or Search, not per keystroke, which keeps well inside CORE's rate limits.
-6. **Chart**: papers per year for the papers on screen (see the note on scope below).
+6. **Chart**: papers per year across **every** paper that matches the query (see the note below).
 
 ### A note on the chart
 
-The chart counts the papers the page has fetched (up to 100), not every match in CORE, and it says so
-in its caption ("Based on the 50 papers shown, out of 71,213 matches"). I couldn't confirm that the
-public API offers server-side aggregation, so I chose the client-side route the brief allows rather than
-guess. The number of papers shown is the user's choice, so the chart sharpens as they fetch more. Bins widen
-automatically (1, 2, 5, 10 years…) so a 1946 outlier doesn't turn the rest into slivers.
+The chart uses CORE's aggregate endpoint (`POST /v3/search/works/aggregate` with
+`aggregations: ["yearPublished"]`), so it counts all matches, not just the papers on screen. It depends on
+the query alone, so paging and changing the page size never refetch it. Matches CORE can't give a year
+for are left out, and the caption says how many. If the aggregate call fails, the papers still show and the
+chart offers a retry. Bins widen automatically (1, 2, 5, 10 years…) so a 1946 outlier doesn't turn the rest
+into slivers.
 
 ## Additions beyond the brief
 
@@ -95,7 +96,7 @@ proxy.conf.js    dev proxy that adds the API key
 
 ## Assumptions and limits
 
-- The chart is based on the current page's papers only (above).
+- The year aggregate's response shape follows CORE's documentation (`aggregations.yearPublished` as year → count); I couldn't call the live API from my build environment.
 - Paging stops at the first 10,000 results (`MAX_RESULTS` in `src/app/search/limits.ts`), my own guess at a safe offset depth for CORE; raise it if the API allows more.
 - The API key is read by the dev proxy; a hosted build needs an equivalent.
 - I couldn't test against CORE from my build environment; behaviour was verified against a local stub

@@ -46,3 +46,8 @@ export interface SearchResponse {
   results: Paper[];
   searchId?: string;
 }
+
+/** Papers per publication year across every match, from CORE's aggregate endpoint. */
+export interface YearAggregation {
+  aggregations?: { yearPublished?: Record<string, number> };
+}

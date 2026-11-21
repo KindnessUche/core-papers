@@ -1,7 +1,7 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable } from 'rxjs';
-import { SearchResponse } from './paper.model';
+import { Observable, map } from 'rxjs';
+import { SearchResponse, YearAggregation } from './paper.model';
 
 /** Proxied to https://api.core.ac.uk/v3 by proxy.conf.js, which also adds the API key. */
 export const API_BASE = '/core-api';
@@ -18,5 +18,18 @@ export class CoreApiService {
     let params = new HttpParams().set('q', query).set('limit', limit);
     if (offset > 0) params = params.set('offset', offset);
     return this.http.get<SearchResponse>(`${API_BASE}/search/works`, { params });
+  }
+
+  /**
+   * How many matching papers were published in each year, counted by CORE across all matches
+   * (not just the page on screen). Keys are years, values are counts.
+   */
+  yearCounts(query: string): Observable<Record<string, number>> {
+    return this.http
+      .post<YearAggregation>(`${API_BASE}/search/works/aggregate`, {
+        q: query,
+        aggregations: ['yearPublished'],
+      })
+      .pipe(map((res) => res.aggregations?.yearPublished ?? {}));
   }
 }

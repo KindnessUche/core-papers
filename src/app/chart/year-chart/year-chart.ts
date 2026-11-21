@@ -11,9 +11,7 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import { Paper } from '../../data/paper.model';
-import { yearOf } from '../../papers/paper-card/paper-format';
-import { binYears, isPlausibleYear, niceScale } from '../year-bins';
+import { binCounts, isPlausibleYear, niceScale } from '../year-bins';
 
 const HEIGHT = 240;
 const MARGIN = { top: 22, right: 8, bottom: 28, left: 34 };
@@ -33,7 +31,7 @@ function columnPath(x: number, y: number, width: number, height: number, baselin
 }
 
 /**
- * Papers per year for the papers on screen, as a column chart. The tallest bar is the only
+ * Papers per year across every paper that matches the search, as a column chart. The tallest bar is the only
  * one in the accent colour, so the eye lands on when the field peaked.
  * Every value is also reachable without a pointer: arrow keys step through the bars, and a
  * table view lists the same numbers.
@@ -46,8 +44,9 @@ function columnPath(x: number, y: number, width: number, height: number, baselin
   templateUrl: './year-chart.html',
 })
 export class YearChart {
-  readonly papers = input.required<readonly Paper[]>();
-  /** How many papers match in CORE, so the chart can say how much of them it is looking at. */
+  /** Papers per publication year across every match, keyed by year. */
+  readonly counts = input.required<Readonly<Record<string, number>>>();
+  /** How many papers match in CORE, so the chart can say how many have no usable year. */
   readonly total = input.required<number>();
 
   protected readonly height = HEIGHT;
@@ -74,23 +73,29 @@ export class YearChart {
   }
 
   private readonly years = computed(() => {
-    const all = this.papers().map(yearOf);
-    return {
-      valid: all.filter((y): y is number => isPlausibleYear(y)),
-      skipped: all.filter((y) => !isPlausibleYear(y)).length,
-    };
+    const valid: [number, number][] = [];
+    let skippedByYear = 0;
+    for (const [key, count] of Object.entries(this.counts())) {
+      const year = Number(key);
+      if (isPlausibleYear(year)) valid.push([year, count]);
+      else skippedByYear += count;
+    }
+    return { valid, skippedByYear };
   });
 
-  protected readonly skipped = computed(() => this.years().skipped);
-  protected readonly shownCount = computed(() => this.papers().length);
-  protected readonly coversAll = computed(() => this.total() <= this.shownCount());
+  /** Papers that match but have no year CORE could count, or one that isn't a real year. */
+  protected readonly skipped = computed(() => {
+    const counted = this.years().valid.reduce((sum, [, count]) => sum + count, 0);
+    return Math.max(0, this.total() - counted);
+  });
+  protected readonly chartedCount = computed(() => this.total() - this.skipped());
 
   private readonly innerW = computed(() => Math.max(40, this.width() - MARGIN.left - MARGIN.right));
   protected readonly innerH = HEIGHT - MARGIN.top - MARGIN.bottom;
   protected readonly baseline = MARGIN.top + this.innerH;
 
   protected readonly bins = computed(() =>
-    binYears(this.years().valid, Math.max(6, Math.floor(this.innerW() / MIN_BAND))),
+    binCounts(this.years().valid, Math.max(6, Math.floor(this.innerW() / MIN_BAND))),
   );
 
   /** Index of the tallest bin (the first, if several tie). */

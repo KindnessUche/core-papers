@@ -63,8 +63,17 @@
       </div>
 
       @if (found.response.results.length) {
-        <div class="chart-slot" [class.stale]="papers.isLoading()">
-          <app-year-chart [papers]="found.response.results" [total]="found.response.totalHits" />
+        <div class="chart-slot" [class.stale]="years.isLoading()">
+          @if (years.hasValue()) {
+            <app-year-chart [counts]="years.value()" [total]="found.response.totalHits" />
+          } @else if (years.error()) {
+            <p class="chart-note">
+              Couldn't load the chart.
+              <button type="button" class="retry" (click)="years.reload()">Try again</button>
+            </p>
+          } @else {
+            <p class="chart-note" role="status">Counting papers by year…</p>
+          }
         </div>
 
         <ul class="grid" [class.stale]="papers.isLoading()" [attr.aria-busy]="papers.isLoading()">
