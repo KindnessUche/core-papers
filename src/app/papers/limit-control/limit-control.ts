@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, input, model } from '@angular/core';
+import { LIMIT_OPTIONS } from '../../search/limits';
 
 let nextId = 0;
 
@@ -11,7 +12,7 @@ let nextId = 0;
 })
 export class LimitControl {
   readonly value = model.required<number>();
-  readonly options = input<readonly number[]>([10, 25, 50, 100]);
+  readonly options = input<readonly number[]>(LIMIT_OPTIONS);
 
   protected readonly id = `limit-${nextId++}`;
   protected readonly index = computed(() => Math.max(0, this.options().indexOf(this.value())));

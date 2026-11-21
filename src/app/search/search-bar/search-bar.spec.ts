@@ -64,4 +64,19 @@ describe('SearchBar', () => {
     expect(input().value).toBe('drone and package');
     expect(note()).toContain('capitals');
   });
+
+  it('hints at the "/" shortcut only while the box is empty', () => {
+    const { el, type } = setup();
+    expect(el.querySelector('.kbd')?.textContent).toBe('/');
+    type('drone');
+    expect(el.querySelector('.kbd')).toBeNull();
+  });
+
+  it('focuses and selects its text on request', () => {
+    const { fixture, input } = setup('drone AND package');
+    fixture.componentInstance.focus();
+    expect(document.activeElement).toBe(input());
+    expect(input().selectionStart).toBe(0);
+    expect(input().selectionEnd).toBe('drone AND package'.length);
+  });
 });

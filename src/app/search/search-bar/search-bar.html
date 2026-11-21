@@ -16,12 +16,17 @@
       autocapitalize="off"
       spellcheck="false"
       enterkeyhint="search"
+      aria-keyshortcuts="/"
       [value]="draft()"
       [attr.aria-invalid]="showError()"
       [attr.aria-describedby]="noteId"
       (input)="onInput($event)"
       (blur)="onBlur()"
     />
+
+    @if (!draft()) {
+      <kbd class="kbd" aria-hidden="true">/</kbd>
+    }
 
     @if (draft()) {
       <button type="button" class="clear" aria-label="Clear search" (click)="clear()">

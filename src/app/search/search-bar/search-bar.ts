@@ -43,6 +43,13 @@ export class SearchBar {
   private readonly checked = signal(false);
   protected readonly showError = computed(() => this.checked() && this.check().error !== null);
 
+  /** Puts the cursor in the box, with the current text selected so typing replaces it. */
+  focus(): void {
+    const input = this.box().nativeElement;
+    input.focus();
+    input.select();
+  }
+
   protected onInput(event: Event): void {
     this.draft.set((event.target as HTMLInputElement).value);
     this.checked.set(false);

@@ -58,6 +58,32 @@
   outline: none;
 }
 
+.kbd {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  min-width: 1.5rem;
+  height: 1.5rem;
+  padding-inline: 0.375rem;
+  border: 1px solid var(--rule);
+  border-radius: 0.375rem;
+  background: var(--surface-sunk);
+  color: var(--ink-faint);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+}
+
+/* A shortcut hint is noise while typing, and meaningless on a touch screen */
+.field:focus-within .kbd {
+  display: none;
+}
+
+@media (pointer: coarse) {
+  .kbd {
+    display: none;
+  }
+}
+
 .clear {
   display: grid;
   flex-shrink: 0;
