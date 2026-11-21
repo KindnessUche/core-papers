@@ -1,0 +1,110 @@
+:host {
+  display: inline-block;
+}
+
+.limit {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+}
+
+.label {
+  font-size: var(--text-caption);
+  font-weight: 600;
+  letter-spacing: var(--track-caps);
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--ink-faint);
+}
+
+.track {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: repeat(var(--n), 1fr);
+  padding: 3px;
+  background: var(--surface-sunk);
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+}
+
+/* The pill that slides between options: one transform, so it can be interrupted mid-move */
+.thumb {
+  position: absolute;
+  z-index: -1;
+  top: 3px;
+  bottom: 3px;
+  left: 3px;
+  width: calc((100% - 6px) / var(--n));
+  border-radius: 999px;
+  background: var(--surface);
+  box-shadow:
+    var(--shadow-s),
+    0 0 0 1px var(--rule);
+  transform: translateX(calc(var(--i) * 100%));
+  transition: transform var(--dur-base) var(--ease-in-out);
+}
+
+.opt {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-width: 2.75rem;
+  min-height: 2rem;
+  padding-inline: var(--space-3);
+  border-radius: 999px;
+  font-size: var(--text-small);
+  font-weight: 600;
+  color: var(--ink-soft);
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    color var(--dur-fast) var(--ease-out),
+    transform var(--dur-press) var(--ease-out);
+}
+
+.opt:has(:checked) {
+  color: var(--ink);
+}
+
+.opt:active {
+  transform: scale(var(--press-scale));
+}
+
+.opt:has(:focus-visible) {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* The real radio covers its label so the whole segment is clickable, but stays invisible */
+.radio {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.radio:focus-visible {
+  outline: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .opt:hover {
+    color: var(--ink);
+  }
+}
+
+@media (pointer: coarse) {
+  .opt {
+    min-height: 2.75rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .thumb {
+    transition: none;
+  }
+}

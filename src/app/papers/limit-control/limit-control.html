@@ -1,0 +1,25 @@
+<div class="limit">
+  <span class="label" [id]="id + '-label'">Papers per search</span>
+  <div
+    class="track"
+    role="radiogroup"
+    [attr.aria-labelledby]="id + '-label'"
+    [style.--n]="options().length"
+    [style.--i]="index()"
+  >
+    <span class="thumb" aria-hidden="true"></span>
+    @for (option of options(); track option) {
+      <label class="opt">
+        <input
+          class="radio"
+          type="radio"
+          [name]="id"
+          [value]="option"
+          [checked]="option === value()"
+          (change)="value.set(option)"
+        />
+        <span class="num">{{ option }}</span>
+      </label>
+    }
+  </div>
+</div>

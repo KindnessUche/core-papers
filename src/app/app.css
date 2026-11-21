@@ -109,13 +109,31 @@
   color: var(--accent);
 }
 
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3) var(--space-6);
+}
+
 .grid {
   display: grid;
   gap: var(--space-4);
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr));
-  margin: var(--space-6) 0 0;
+  margin: var(--space-4) 0 0;
   padding: 0;
   list-style: none;
+}
+
+/* While the next results load, the old ones stay put but step back */
+.grid {
+  transition: opacity var(--dur-fast) var(--ease-out);
+}
+
+.grid.stale {
+  opacity: 0.45;
+  pointer-events: none;
 }
 
 /* Cards stagger in once, capped so a long list never feels slow */

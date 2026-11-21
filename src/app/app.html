@@ -20,19 +20,26 @@
     </p>
   </section>
 
-  <section class="results" aria-labelledby="results-title" aria-live="polite">
+  <section class="results" aria-labelledby="results-title">
     <h2 id="results-title" class="sr-only">Results</h2>
-    @if (papers.isLoading()) {
-      <p class="status">Searching CORE…</p>
-    } @else if (papers.error()) {
-      <p class="status status-error">Couldn't reach CORE. Check your API key in .env.local.</p>
-    } @else if (papers.value(); as res) {
-      <p class="status">
-        <span class="num">{{ res.totalHits | number }}</span>
-        {{ res.totalHits | i18nPlural: matchLabel }} <code>{{ query() }}</code> · showing
-        <span class="num">{{ res.results.length }}</span>
+
+    <div class="toolbar">
+      <p class="status" [class.status-error]="papers.error()" role="status">
+        @if (papers.error()) {
+          Couldn't reach CORE. Check your API key in .env.local.
+        } @else if (shown(); as res) {
+          <span class="num">{{ res.totalHits | number }}</span>
+          {{ res.totalHits | i18nPlural: matchLabel }} <code>{{ query() }}</code> · showing
+          <span class="num">{{ res.results.length }}</span>
+        } @else {
+          Searching CORE…
+        }
       </p>
-      <ul class="grid">
+      <app-limit-control [(value)]="limit" />
+    </div>
+
+    @if (shown(); as res) {
+      <ul class="grid" [class.stale]="papers.isLoading()" [attr.aria-busy]="papers.isLoading()">
         @for (paper of res.results; track paper.id; let i = $index) {
           <li [style.--i]="i">
             <app-paper-card [paper]="paper" />
