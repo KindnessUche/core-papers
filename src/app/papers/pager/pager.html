@@ -1,0 +1,38 @@
+<nav class="pager" aria-label="Pages of results">
+  <button type="button" class="step" [disabled]="page() <= 1" (click)="go(page() - 1)">
+    <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true">
+      <path d="m12 4-6 6 6 6" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+    </svg>
+    Previous
+  </button>
+
+  <p class="where num">Page {{ page() | number }} of {{ pageCount() | number }}</p>
+
+  <ol class="pages">
+    @for (item of items(); track $index) {
+      @if (item === 'gap') {
+        <li class="gap" aria-hidden="true">…</li>
+      } @else {
+        <li>
+          <button
+            type="button"
+            class="page num"
+            [class.current]="item === page()"
+            [attr.aria-current]="item === page() ? 'page' : null"
+            [attr.aria-label]="'Page ' + item"
+            (click)="go(item)"
+          >
+            {{ item | number }}
+          </button>
+        </li>
+      }
+    }
+  </ol>
+
+  <button type="button" class="step" [disabled]="page() >= pageCount()" (click)="go(page() + 1)">
+    Next
+    <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true">
+      <path d="m8 4 6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+    </svg>
+  </button>
+</nav>

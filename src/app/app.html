@@ -22,11 +22,11 @@
 
   <section class="search reveal" style="--i: 3" aria-label="Search">
     <app-search-bar [query]="query()" [busy]="papers.isLoading()" (search)="search($event)">
-      <app-limit-control settings [(value)]="limit" />
+      <app-limit-control settings [value]="limit()" (valueChange)="setLimit($event)" />
     </app-search-bar>
   </section>
 
-  <section class="results" aria-labelledby="results-title">
+  <section #results class="results" aria-labelledby="results-title">
     <h2 id="results-title" class="sr-only">Results</h2>
 
     @if (!query()) {
@@ -53,7 +53,8 @@
           <span class="num">{{ found.response.totalHits | number }}</span>
           {{ found.response.totalHits | i18nPlural: matchLabel }} <code>{{ found.query }}</code>
           @if (found.response.results.length) {
-            · showing <span class="num">{{ found.response.results.length }}</span>
+            · showing
+            <span class="num">{{ found.offset + 1 | number }}–{{ found.offset + found.response.results.length | number }}</span>
           }
         </p>
         @if (found.response.results.length) {
@@ -73,6 +74,22 @@
             </li>
           }
         </ul>
+
+        @if (pagesOf(found) > 1) {
+          <app-pager class="pager-slot" [page]="page()" [pageCount]="pagesOf(found)" (pageChange)="goToPage($event)" />
+          @if (found.response.totalHits > maxResults) {
+            <p class="cap">
+              Paging stops at the first <span class="num">{{ maxResults | number }}</span> results.
+              Narrow your query to reach the rest.
+            </p>
+          }
+        }
+      } @else if (found.response.totalHits > 0) {
+        <div class="empty">
+          <p class="empty-title">Nothing on this page</p>
+          <p class="empty-hint">That page is past the last result for this search.</p>
+          <button type="button" class="retry" (click)="goToPage(1)">Back to page 1</button>
+        </div>
       } @else {
         <div class="empty">
           <p class="empty-title">No papers match that</p>

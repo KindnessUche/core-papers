@@ -80,6 +80,11 @@ describe('csvFilename', () => {
     expect(csvFilename('"climate change"', day)).toBe('marginalia-climate-change-2026-11-21.csv');
   });
 
+  it('says which page it came from', () => {
+    expect(csvFilename('drone', day, 1)).toBe('marginalia-drone-2026-11-21.csv');
+    expect(csvFilename('drone', day, 3)).toBe('marginalia-drone-2026-11-21-page-3.csv');
+  });
+
   it('falls back when nothing usable is left, and caps the length', () => {
     expect(csvFilename('(((', day)).toBe('marginalia-papers-2026-11-21.csv');
     expect(csvFilename('a'.repeat(200), day).length).toBeLessThan(80);

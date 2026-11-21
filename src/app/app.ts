@@ -1,5 +1,14 @@
 import { DecimalPipe, I18nPluralPipe } from '@angular/common';
-import { Component, DestroyRef, effect, inject, linkedSignal, signal, viewChild } from '@angular/core';
+import {
+  Component,
+  DestroyRef,
+  ElementRef,
+  effect,
+  inject,
+  linkedSignal,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { Title } from '@angular/platform-browser';
 import { map } from 'rxjs';
@@ -9,8 +18,11 @@ import { SearchResponse } from './data/paper.model';
 import { csvFilename, downloadText, papersToCsv } from './export/papers-csv';
 import { YearChart } from './chart/year-chart/year-chart';
 import { LimitControl } from './papers/limit-control/limit-control';
+import { Pager } from './papers/pager/pager';
+import { pageCount } from './papers/pager/paging';
 import { PaperCardSkeleton } from './papers/paper-card/paper-card-skeleton';
 import { PaperCard } from './papers/paper-card/paper-card';
+import { MAX_RESULTS } from './search/limits';
 import { checkQuery } from './search/query-check';
 import { SearchBar } from './search/search-bar/search-bar';
 import { buildSearch, parseState } from './state/url-state';
@@ -19,6 +31,9 @@ import { buildSearch, parseState } from './state/url-state';
 interface Found {
   query: string;
   response: SearchResponse;
+  /** Where this page starts, and how big the pages were, when it was fetched. */
+  offset: number;
+  limit: number;
 }
 
 /** A query from the address bar is only trusted if it would pass the same checks as one typed in. */
@@ -37,6 +52,7 @@ const BASE_TITLE = 'Marginalia · Search open research';
     PaperCard,
     PaperCardSkeleton,
     LimitControl,
+    Pager,
     SearchBar,
     YearChart,
   ],
@@ -48,11 +64,16 @@ export class App {
   private readonly api = inject(CoreApiService);
   private readonly title = inject(Title);
   private readonly searchBar = viewChild.required(SearchBar);
+  private readonly results = viewChild.required<ElementRef<HTMLElement>>('results');
 
   private readonly initial = stateFromUrl();
   /** What is being searched. Empty means nothing yet. */
   protected readonly query = signal(this.initial.q);
+  /** Papers per page. */
   protected readonly limit = signal(this.initial.limit);
+  /** Which page of results, counting from 1. */
+  protected readonly page = signal(this.initial.page);
+  protected readonly maxResults = MAX_RESULTS;
 
   protected readonly examples = [
     'drone AND (package OR delivery)',
@@ -64,11 +85,21 @@ export class App {
 
   protected readonly papers = rxResource({
     // No query, no request: the resource stays idle
-    params: () => (this.query() ? { q: this.query(), limit: this.limit() } : undefined),
+    params: () =>
+      this.query()
+        ? { q: this.query(), limit: this.limit(), offset: (this.page() - 1) * this.limit() }
+        : undefined,
     stream: ({ params }) =>
-      this.api
-        .search(params.q, params.limit)
-        .pipe(map((response): Found => ({ query: params.q, response }))),
+      this.api.search(params.q, params.limit, params.offset).pipe(
+        map(
+          (response): Found => ({
+            query: params.q,
+            response,
+            offset: params.offset,
+            limit: params.limit,
+          }),
+        ),
+      ),
   });
 
   /** Keeps the previous results on screen while the next ones load, so the page never jumps. */
@@ -80,17 +111,21 @@ export class App {
   constructor() {
     // The address bar mirrors the search, so a search can be shared, bookmarked and walked back through.
     effect(() => {
-      const state = { q: this.query(), limit: this.limit() };
+      const state = { q: this.query(), limit: this.limit(), page: this.page() };
       const next = buildSearch(state);
       if (next === location.search) return;
-      // A new query is a new place in history; changing only the count just refines this one
-      const sameQuery = parseState(location.search).q === state.q;
-      history[sameQuery ? 'replaceState' : 'pushState'](null, '', location.pathname + next);
+      // A new query or a new page is a new place in history. Changing the page size only
+      // refines where you already are, so it replaces the entry instead of adding one.
+      const current = parseState(location.search);
+      const refinesOnly =
+        current.q === state.q && (current.limit !== state.limit || current.page === state.page);
+      history[refinesOnly ? 'replaceState' : 'pushState'](null, '', location.pathname + next);
     });
 
     effect(() => {
       const q = this.query();
-      this.title.setTitle(q ? `${q} · Marginalia` : BASE_TITLE);
+      const page = this.page();
+      this.title.setTitle(q ? `${q}${page > 1 ? ` · page ${page}` : ''} · Marginalia` : BASE_TITLE);
     });
 
     // Back and forward change the address; follow it
@@ -98,6 +133,7 @@ export class App {
       const state = stateFromUrl();
       this.query.set(state.q);
       this.limit.set(state.limit);
+      this.page.set(state.page);
     };
     addEventListener('popstate', follow);
     inject(DestroyRef).onDestroy(() => removeEventListener('popstate', follow));
@@ -115,8 +151,13 @@ export class App {
   protected readonly errorMessage = () =>
     this.papers.error() ? describeError(this.papers.error()) : '';
 
+  protected pagesOf(found: Found): number {
+    return pageCount(found.response.totalHits, found.limit);
+  }
+
   protected exportCsv(found: Found): void {
-    downloadText(csvFilename(found.query), papersToCsv(found.response.results));
+    const page = Math.floor(found.offset / found.limit) + 1;
+    downloadText(csvFilename(found.query, new Date(), page), papersToCsv(found.response.results));
   }
 
   protected search(query: string): void {
@@ -124,7 +165,24 @@ export class App {
     if (query && query === this.query()) {
       this.papers.reload();
     } else {
+      this.page.set(1);
       this.query.set(query);
     }
+  }
+
+  /** A new page size keeps you near the paper you were looking at, rather than jumping to page 1. */
+  protected setLimit(next: number): void {
+    const firstShown = (this.page() - 1) * this.limit();
+    this.limit.set(next);
+    this.page.set(Math.floor(firstShown / next) + 1);
+  }
+
+  protected goToPage(page: number): void {
+    this.page.set(page);
+    const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    this.results().nativeElement.scrollIntoView?.({
+      behavior: reduceMotion ? 'auto' : 'smooth',
+      block: 'start',
+    });
   }
 }

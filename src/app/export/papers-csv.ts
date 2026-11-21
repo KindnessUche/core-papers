@@ -61,15 +61,16 @@ export function papersToCsv(papers: readonly Paper[]): string {
   return '﻿' + [COLUMNS.join(','), ...papers.map(row)].join('\r\n') + '\r\n';
 }
 
-/** "marginalia-drone-and-package-2026-11-21.csv" */
-export function csvFilename(query: string, date = new Date()): string {
+/** "marginalia-drone-and-package-2026-11-21.csv", or "...-page-3.csv" beyond the first page. */
+export function csvFilename(query: string, date = new Date(), page = 1): string {
   const slug = query
     .toLowerCase()
     .replace(/[^\p{L}\p{N}]+/gu, '-')
     .replace(/^-+|-+$/g, '')
     .slice(0, 40)
     .replace(/-+$/g, '');
-  return `marginalia-${slug || 'papers'}-${date.toISOString().slice(0, 10)}.csv`;
+  const suffix = page > 1 ? `-page-${page}` : '';
+  return `marginalia-${slug || 'papers'}-${date.toISOString().slice(0, 10)}${suffix}.csv`;
 }
 
 export function downloadText(filename: string, text: string, type = 'text/csv;charset=utf-8'): void {

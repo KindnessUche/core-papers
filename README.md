@@ -35,7 +35,7 @@ that does the same rewrite and adds the key.
 2. **Papers from CORE**: `GET /v3/search/works`, through `CoreApiService`.
 3. **A clean UI of my own design**: cards with year, venue, title, authors, abstract preview, and links to
    the PDF, the DOI and the CORE page. Missing fields are left out rather than shown as blanks.
-4. **Result count**: a segmented control for 10, 25, 50 or 100 papers per search.
+4. **Result count**: a segmented control for 10, 25, 50 or 100 papers per page, with a pager (Previous/Next and numbered pages; "Page X of Y" on phones) to move through the rest. The page is in the URL (`p`), so Back and shared links work. Changing the page size keeps you near the paper you were reading.
 5. **Boolean search**: `drone AND (package OR delivery)`, `"exact phrase"`, `NOT`. Searches run on
    Enter or Search, not per keystroke, which keeps well inside CORE's rate limits.
 6. **Chart**: papers per year for the papers on screen (see the note on scope below).
@@ -91,11 +91,12 @@ proxy.conf.js    dev proxy that adds the API key
 - **Tokens first.** Colour, type, spacing, motion curves and durations live in `src/styles/tokens.css`;
   components use only those.
 - **Git history.** Each commit leaves a working app: scaffold, tokens and shell, CORE fetch, cards, real-data
-  fixes, result count, search, chart, URL state, export.
+  fixes, result count, search, chart, URL state, export, pagination.
 
 ## Assumptions and limits
 
-- The chart is based on fetched papers only (above).
+- The chart is based on the current page's papers only (above).
+- Paging stops at the first 10,000 results (`MAX_RESULTS` in `src/app/search/limits.ts`), my own guess at a safe offset depth for CORE; raise it if the API allows more.
 - The API key is read by the dev proxy; a hosted build needs an equivalent.
 - I couldn't test against CORE from my build environment; behaviour was verified against a local stub
   built from a real response, plus unit tests.

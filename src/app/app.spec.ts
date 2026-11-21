@@ -167,6 +167,181 @@ describe('App', () => {
     expect(text()).not.toContain('A paper');
   });
 
+  describe('paging', () => {
+    const requestAt = (q: string, offset: string | null, limit = '10') =>
+      http.expectOne(
+        (r) =>
+          r.url === '/core-api/search/works' &&
+          r.params.get('q') === q &&
+          r.params.get('offset') === offset &&
+          r.params.get('limit') === limit,
+      );
+    const pagerButton = (label: string) =>
+      Array.from(el.querySelectorAll<HTMLButtonElement>('.pager button')).find(
+        (b) => b.textContent!.trim() === label,
+      )!;
+    const pick = (size: string) => {
+      el.querySelector<HTMLInputElement>(`input[type="radio"][value="${size}"]`)!.click();
+      fixture.detectChanges();
+      TestBed.tick();
+    };
+    const papers = (n: number, from = 1) =>
+      Array.from({ length: n }, (_, i) => ({ id: from + i, title: `Paper ${from + i}` }));
+
+    it('asks for the next page by offset and says which papers it is showing', async () => {
+      start();
+      submitQuery('drone');
+      request('drone').flush(page(papers(10), 100));
+      await flushed();
+      expect(text()).toContain('showing 1–10');
+      const entries = history.length;
+
+      pagerButton('Next').click();
+      fixture.detectChanges();
+      TestBed.tick();
+      requestAt('drone', '10').flush(page(papers(10, 11), 100));
+      await flushed();
+
+      expect(text()).toContain('showing 11–20');
+      expect(text()).toContain('Paper 11');
+      expect(location.search).toBe('?q=drone&p=2');
+      expect(history.length).toBe(entries + 1); // a page is a place you can go Back from
+      expect(document.title).toBe('drone · page 2 · Marginalia');
+    });
+
+    it('scrolls back to the top of the results when the page changes', async () => {
+      start();
+      submitQuery('drone');
+      request('drone').flush(page(papers(10), 100));
+      await flushed();
+
+      const calls: ScrollIntoViewOptions[] = [];
+      HTMLElement.prototype.scrollIntoView = function (options?: boolean | ScrollIntoViewOptions) {
+        calls.push(options as ScrollIntoViewOptions);
+      };
+      try {
+        pagerButton('Next').click();
+        fixture.detectChanges();
+        TestBed.tick();
+        requestAt('drone', '10').flush(page(papers(10, 11), 100));
+      } finally {
+        delete (HTMLElement.prototype as Partial<HTMLElement>).scrollIntoView;
+      }
+      expect(calls).toHaveLength(1);
+      expect(calls[0].block).toBe('start');
+    });
+
+    it('keeps you near the same paper when the page size changes', async () => {
+      start('/?q=drone&p=5'); // papers 41–50
+      requestAt('drone', '40').flush(page(papers(10, 41), 500));
+      await flushed();
+
+      pick('25'); // paper 41 now lives on page 2 (26–50)
+      requestAt('drone', '25', '25').flush(page(papers(25, 26), 500));
+      await flushed();
+
+      expect(location.search).toBe('?q=drone&n=25&p=2');
+      expect(text()).toContain('showing 26–50');
+    });
+
+    it('does not add a history entry when only the page size changes', async () => {
+      start();
+      submitQuery('drone');
+      request('drone').flush(page(papers(10), 500));
+      await flushed();
+      const entries = history.length;
+
+      pick('50');
+      requestAt('drone', null, '50').flush(page(papers(50), 500));
+      await flushed();
+
+      expect(location.search).toBe('?q=drone&n=50');
+      expect(history.length).toBe(entries);
+    });
+
+    it('starts again from page 1 for a different search', async () => {
+      start('/?q=drone&p=3');
+      requestAt('drone', '20').flush(page(papers(10, 21), 500));
+      await flushed();
+
+      submitQuery('crispr');
+      requestAt('crispr', null).flush(page(papers(10), 500));
+      await flushed();
+      expect(location.search).toBe('?q=crispr');
+    });
+
+    it('follows Back and Forward between pages', async () => {
+      start('/?q=drone');
+      requestAt('drone', null).flush(page(papers(10), 100));
+      await flushed();
+
+      history.replaceState(null, '', '/?q=drone&p=4');
+      dispatchEvent(new PopStateEvent('popstate'));
+      fixture.detectChanges();
+      TestBed.tick();
+      requestAt('drone', '30').flush(page(papers(10, 31), 100));
+      await flushed();
+      expect(text()).toContain('showing 31–40');
+    });
+
+    it('shows a pager only when there is more than one page', async () => {
+      start();
+      submitQuery('drone');
+      request('drone').flush(page(papers(10), 10));
+      await flushed();
+      expect(el.querySelector('app-pager')).toBeNull();
+
+      submitQuery('crispr');
+      request('crispr').flush(page(papers(10), 11));
+      await flushed();
+      expect(el.querySelector('app-pager')).not.toBeNull();
+      expect(text()).toContain('Page 1 of 2');
+    });
+
+    it('explains that paging stops at 10,000 results', async () => {
+      start();
+      submitQuery('drone');
+      request('drone').flush(page(papers(10), 71213));
+      await flushed();
+      expect(text()).toContain('Page 1 of 1,000');
+      expect(text()).toContain('Paging stops at the first 10,000 results');
+    });
+
+    it('offers a way back when a page is past the last result', async () => {
+      start('/?q=drone&p=3');
+      requestAt('drone', '20').flush(page([], 5));
+      await flushed();
+      expect(text()).toContain('Nothing on this page');
+
+      el.querySelector<HTMLButtonElement>('.retry')!.click();
+      fixture.detectChanges();
+      TestBed.tick();
+      requestAt('drone', null).flush(page(papers(5), 5));
+      await flushed();
+      expect(text()).toContain('Paper 1');
+    });
+
+    it('names an exported file after its page', async () => {
+      start('/?q=drone&p=2');
+      requestAt('drone', '10').flush(page(papers(10, 11), 100));
+      await flushed();
+
+      const names: string[] = [];
+      URL.createObjectURL = () => 'blob:test';
+      URL.revokeObjectURL = () => undefined;
+      const click = HTMLAnchorElement.prototype.click;
+      HTMLAnchorElement.prototype.click = function (this: HTMLAnchorElement) {
+        names.push(this.download);
+      };
+      try {
+        el.querySelector<HTMLButtonElement>('.export')!.click();
+      } finally {
+        HTMLAnchorElement.prototype.click = click;
+      }
+      expect(names[0]).toMatch(/-page-2\.csv$/);
+    });
+  });
+
   describe('export', () => {
     it('downloads the papers on screen as a CSV named after the search', async () => {
       start();

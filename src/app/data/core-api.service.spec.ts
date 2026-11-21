@@ -32,4 +32,16 @@ describe('CoreApiService', () => {
 
     expect(received).toEqual(body);
   });
+
+  it('asks for a later page with an offset, and leaves it out for the first', () => {
+    service.search('drone', 25, 50).subscribe();
+    const later = http.expectOne((r) => r.params.get('offset') === '50');
+    expect(later.request.params.get('limit')).toBe('25');
+    later.flush({ totalHits: 0, limit: 25, offset: 50, results: [] });
+
+    service.search('drone', 25).subscribe();
+    const first = http.expectOne((r) => r.url === '/core-api/search/works');
+    expect(first.request.params.has('offset')).toBe(false);
+    first.flush({ totalHits: 0, limit: 25, offset: 0, results: [] });
+  });
 });
