@@ -34,6 +34,7 @@ export interface Paper {
   citationCount?: number | null;
   language?: { code?: string; name?: string } | null;
   fieldOfStudy?: string | null;
+  contributors?: string[];
   dataProviders?: DataProvider[];
   links?: { type?: string; url?: string }[];
 }
@@ -43,4 +44,5 @@ export interface SearchResponse {
   limit: number;
   offset: number;
   results: Paper[];
+  searchId?: string;
 }

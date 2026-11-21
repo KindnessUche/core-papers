@@ -1,4 +1,15 @@
-import { authorLine, citationLabel, cleanAbstract, doiUrl, httpUrl, venueOf, yearOf } from './paper-format';
+import {
+  authorLine,
+  citationLabel,
+  cleanAbstract,
+  coreUrlOf,
+  doiUrl,
+  httpUrl,
+  kindOf,
+  readUrlOf,
+  venueOf,
+  yearOf,
+} from './paper-format';
 
 describe('paper-format', () => {
   it('summarises long author lists', () => {
@@ -39,5 +50,38 @@ describe('paper-format', () => {
     expect(citationLabel(0)).toBe('');
     expect(citationLabel(1)).toBe('1 citation');
     expect(citationLabel(1204)).toBe('1,204 citations');
+  });
+});
+
+describe('paper-format with real CORE data', () => {
+  it('decodes HTML-escaped abstracts, including a truncated closing tag', () => {
+    const raw = '&lt;p&gt;This is the first release for DRONE.&lt;/p&gt';
+    expect(cleanAbstract(raw)).toBe('This is the first release for DRONE.');
+  });
+
+  it('keeps maths that merely contains angle brackets', () => {
+    expect(cleanAbstract('Effects were significant when p < 0.05 and n > 30.')).toBe(
+      'Effects were significant when p < 0.05 and n > 30.',
+    );
+  });
+
+  it('finds the PDF and CORE page in the links list when downloadUrl is empty', () => {
+    const paper = {
+      id: 1,
+      downloadUrl: '',
+      links: [
+        { type: 'download', url: 'https://core.ac.uk/download/1.pdf' },
+        { type: 'display', url: 'https://core.ac.uk/works/1' },
+      ],
+    };
+    expect(readUrlOf(paper)).toBe('https://core.ac.uk/download/1.pdf');
+    expect(coreUrlOf(paper)).toBe('https://core.ac.uk/works/1');
+    expect(readUrlOf({ id: 2, downloadUrl: '', links: [{ type: 'display', url: 'https://core.ac.uk/works/2' }] })).toBe('');
+  });
+
+  it('uses fieldOfStudy when documentType is null', () => {
+    expect(kindOf({ id: 1, documentType: null, fieldOfStudy: 'Manuscript' })).toBe('Manuscript');
+    expect(kindOf({ id: 1, documentType: 'text', fieldOfStudy: 'Text' })).toBe('text');
+    expect(kindOf({ id: 1 })).toBe('');
   });
 });

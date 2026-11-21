@@ -22,11 +22,27 @@ export function venueOf(paper: Paper): string {
   return journal || paper.publisher?.trim() || provider || '';
 }
 
-/** Abstracts sometimes arrive with markup and ragged whitespace. */
+/** Tags that separate words ("<p>a</p><p>b</p>" must not become "ab"). */
+const BLOCK_TAG = /<\/?(?:[\w-]+:)?(?:p|br|div|li|ul|ol|title|sec|h\d)\b[^>]*>/gi;
+/** Anything that starts like a tag. "p < 0.05" is maths, not markup, so `<` must be followed by a letter. */
+const ANY_TAG = /<\/?[a-z][^>]*>/gi;
+
+function stripTags(text: string): string {
+  return text.replace(BLOCK_TAG, ' ').replace(ANY_TAG, '');
+}
+
+/** Turns "&lt;p&gt;" into "<p>" without ever putting the text into the live DOM. */
+function decodeEntities(text: string): string {
+  if (typeof DOMParser === 'undefined') return text;
+  return new DOMParser().parseFromString(text, 'text/html').documentElement.textContent ?? text;
+}
+
+/**
+ * CORE abstracts arrive with markup, and often HTML-escaped markup (`&lt;p&gt;…`).
+ * Strip tags, decode entities, then strip again to catch what the decoding revealed.
+ */
 export function cleanAbstract(text?: string | null): string {
-  return (text ?? '')
-    .replace(/<\/?(?:[\w-]+:)?(?:p|br|div|li|ul|ol|title|sec|h\d)\b[^>]*>/gi, ' ') // block tags break words apart
-    .replace(/<[^>]*>/g, '') // inline tags (b, i, sup…) vanish without leaving a gap
+  return stripTags(decodeEntities(stripTags(text ?? '')))
     .replace(/\s+/g, ' ')
     .trim();
 }
@@ -50,4 +66,23 @@ const number = new Intl.NumberFormat('en');
 export function citationLabel(count?: number | null): string {
   if (!count || count < 1) return '';
   return `${number.format(count)} ${plural.select(count) === 'one' ? 'citation' : 'citations'}`;
+}
+
+function linkOf(paper: Paper, type: string): string {
+  return httpUrl(paper.links?.find((l) => l.type === type)?.url);
+}
+
+/** The PDF, when CORE has one. `downloadUrl` is often empty; the `links` list is the fallback. */
+export function readUrlOf(paper: Paper): string {
+  return httpUrl(paper.downloadUrl) || linkOf(paper, 'download');
+}
+
+/** The paper's page on CORE. Every work has one. */
+export function coreUrlOf(paper: Paper): string {
+  return linkOf(paper, 'display');
+}
+
+/** `documentType` is mostly null, so fall back to the broader `fieldOfStudy` ("Manuscript", "Text"). */
+export function kindOf(paper: Paper): string {
+  return paper.documentType?.trim() || paper.fieldOfStudy?.trim() || '';
 }

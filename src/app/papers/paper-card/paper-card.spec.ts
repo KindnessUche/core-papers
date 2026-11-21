@@ -19,6 +19,7 @@ describe('PaperCard', () => {
       abstract: 'We study <b>routing</b>.',
       journals: [{ title: 'Journal of Drones' }],
       downloadUrl: 'https://example.org/paper.pdf',
+      links: [{ type: 'display', url: 'https://core.ac.uk/works/1' }],
       doi: '10.1000/xyz',
       citationCount: 1,
     });
@@ -29,7 +30,9 @@ describe('PaperCard', () => {
     expect(text).toContain('We study routing.');
     expect(text).toContain('1 citation');
     expect(el.querySelector<HTMLAnchorElement>('.primary')?.href).toBe('https://example.org/paper.pdf');
-    expect(el.querySelector<HTMLAnchorElement>('.link:not(.primary)')?.href).toBe('https://doi.org/10.1000/xyz');
+    const hrefs = Array.from(el.querySelectorAll<HTMLAnchorElement>('.link')).map((a) => a.href);
+    expect(hrefs).toContain('https://doi.org/10.1000/xyz');
+    expect(hrefs).toContain('https://core.ac.uk/works/1');
   });
 
   it('leaves out what is missing instead of showing placeholders', () => {

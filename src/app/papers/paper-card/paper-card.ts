@@ -4,8 +4,10 @@ import {
   authorLine,
   citationLabel,
   cleanAbstract,
+  coreUrlOf,
   doiUrl,
-  httpUrl,
+  kindOf,
+  readUrlOf,
   venueOf,
   yearOf,
 } from './paper-format';
@@ -25,7 +27,8 @@ export class PaperCard {
   protected readonly authors = computed(() => authorLine(this.paper().authors));
   protected readonly abstract = computed(() => cleanAbstract(this.paper().abstract));
   protected readonly citations = computed(() => citationLabel(this.paper().citationCount));
-  protected readonly type = computed(() => this.paper().documentType?.trim() ?? '');
-  protected readonly readUrl = computed(() => httpUrl(this.paper().downloadUrl));
+  protected readonly type = computed(() => kindOf(this.paper()));
+  protected readonly readUrl = computed(() => readUrlOf(this.paper()));
+  protected readonly coreUrl = computed(() => coreUrlOf(this.paper()));
   protected readonly doi = computed(() => doiUrl(this.paper().doi));
 }

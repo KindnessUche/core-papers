@@ -23,7 +23,7 @@
     <p class="abstract">{{ abstract() }}</p>
   }
 
-  @if (type() || citations() || readUrl() || doi()) {
+  @if (type() || citations() || readUrl() || doi() || coreUrl()) {
     <footer class="foot">
       <p class="facts">
         @if (type()) {
@@ -33,11 +33,16 @@
           <span class="num cites">{{ citations() }}</span>
         }
       </p>
-      @if (doi() || readUrl()) {
+      @if (doi() || coreUrl() || readUrl()) {
         <div class="actions">
           @if (doi()) {
             <a class="link" [href]="doi()" target="_blank" rel="noopener noreferrer">
               DOI<span class="sr-only">: {{ title() }}</span>
+            </a>
+          }
+          @if (coreUrl()) {
+            <a class="link" [href]="coreUrl()" target="_blank" rel="noopener noreferrer">
+              CORE<span class="sr-only">: {{ title() }}</span>
             </a>
           }
           @if (readUrl()) {
