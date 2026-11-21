@@ -20,30 +20,25 @@
     </p>
   </section>
 
-  <section class="results reveal" style="--i: 3" aria-label="Results" aria-live="polite">
+  <section class="results" aria-labelledby="results-title" aria-live="polite">
+    <h2 id="results-title" class="sr-only">Results</h2>
     @if (papers.isLoading()) {
       <p class="status">Searching CORE…</p>
     } @else if (papers.error()) {
       <p class="status status-error">Couldn't reach CORE. Check your API key in .env.local.</p>
     } @else if (papers.value(); as res) {
       <p class="status">
-        <span class="num">{{ res.totalHits | number }}</span> papers match
-        <code>{{ query() }}</code> · showing <span class="num">{{ res.results.length }}</span>
+        <span class="num">{{ res.totalHits | number }}</span>
+        {{ res.totalHits | i18nPlural: matchLabel }} <code>{{ query() }}</code> · showing
+        <span class="num">{{ res.results.length }}</span>
       </p>
-      <ol class="raw-list">
-        @for (paper of res.results; track paper.id) {
-          <li>
-            {{ paper.title ?? 'Untitled' }}
-            <span class="num raw-year">{{ paper.yearPublished }}</span>
+      <ul class="grid">
+        @for (paper of res.results; track paper.id; let i = $index) {
+          <li [style.--i]="i">
+            <app-paper-card [paper]="paper" />
           </li>
         }
-      </ol>
-      @if (res.results[0]; as first) {
-        <details class="raw">
-          <summary>Raw first result</summary>
-          <pre>{{ first | json }}</pre>
-        </details>
-      }
+      </ul>
     }
   </section>
 </main>

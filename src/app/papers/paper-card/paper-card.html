@@ -1,0 +1,52 @@
+<article class="card">
+  @if (year() || venue()) {
+    <p class="meta">
+      @if (year()) {
+        <span class="num">{{ year() }}</span>
+      }
+      @if (year() && venue()) {
+        <span aria-hidden="true">·</span>
+      }
+      @if (venue()) {
+        <span class="venue" [title]="venue()">{{ venue() }}</span>
+      }
+    </p>
+  }
+
+  <h3 class="title" [title]="title()">{{ title() }}</h3>
+
+  @if (authors()) {
+    <p class="authors">{{ authors() }}</p>
+  }
+
+  @if (abstract()) {
+    <p class="abstract">{{ abstract() }}</p>
+  }
+
+  @if (type() || citations() || readUrl() || doi()) {
+    <footer class="foot">
+      <p class="facts">
+        @if (type()) {
+          <span class="chip">{{ type() }}</span>
+        }
+        @if (citations()) {
+          <span class="num cites">{{ citations() }}</span>
+        }
+      </p>
+      @if (doi() || readUrl()) {
+        <div class="actions">
+          @if (doi()) {
+            <a class="link" [href]="doi()" target="_blank" rel="noopener noreferrer">
+              DOI<span class="sr-only">: {{ title() }}</span>
+            </a>
+          }
+          @if (readUrl()) {
+            <a class="link primary" [href]="readUrl()" target="_blank" rel="noopener noreferrer">
+              Read<span class="sr-only">: {{ title() }}</span>
+            </a>
+          }
+        </div>
+      }
+    </footer>
+  }
+</article>
